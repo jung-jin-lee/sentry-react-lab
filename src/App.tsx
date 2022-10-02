@@ -1,9 +1,28 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import * as Sentry from '@sentry/react';
+import axios from 'axios';
+
+import './App.css';
+import reactLogo from './assets/react.svg';
+import { SentryError, throwError } from './utils/error';
+
+const client = axios.create();
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    async function get() {
+      try {
+        await client.get('https://shopping-mall-api-lab.click/');
+      } catch (error) {
+        console.error(error);
+        Sentry.captureException(new SentryError(error as Error));
+      }
+    }
+
+    get();
+  }, []);
 
   return (
     <div className="App">
@@ -17,7 +36,15 @@ function App() {
       </div>
       <h1>Vite + React</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
+        <button
+          onClick={() => {
+            try {
+              throwError();
+            } catch (error: unknown) {
+              Sentry.captureException(new SentryError(error as Error));
+            }
+          }}
+        >
           count is {count}
         </button>
         <p>
@@ -28,7 +55,7 @@ function App() {
         Click on the Vite and React logos to learn more
       </p>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
